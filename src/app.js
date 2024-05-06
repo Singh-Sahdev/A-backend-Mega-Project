@@ -22,4 +22,10 @@ app.use(express.static('public'))
 // for managing web browser cookies
 app.use(cookieParser())
 
+
+// Importing Routes
+import router from './routes/user.route.js'
+
+app.use('/api/v1/users',router)
+
 export {app}
