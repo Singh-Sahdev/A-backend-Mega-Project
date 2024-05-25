@@ -14,7 +14,7 @@ app.use(cors({
 app.use(express.json({limit:'16kb'}))
 
 //for handling different url request encodings
-app.use(express.urlencoded({extended:true}))
+app.use(express.urlencoded({extended:true, limit: "16kb"}))
 
 //for storing temporary or public assets for our server
 app.use(express.static('public'))
