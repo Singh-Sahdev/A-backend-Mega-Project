@@ -1,4 +1,4 @@
-import mongoose, {isValidObjectId} from "mongoose"
+import mongoose from "mongoose"
 import {User} from "../models/user.model.js"
 import { Subscription } from "../models/subscription.model.js"
 import {ApiError} from "../utils/ApiError.js"
@@ -7,18 +7,10 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 
 const toggleSubscription = asyncHandler(async (req, res) => {
-    const {channelId} = req.params // expecting channelId as username of the channel
-    // TODO: toggle subscription
+    const {channelId} = req.params
 
     if(!channelId){
-        throw new ApiError(404,'Channel doesnt exist')
-    }
-
-    //finding the channel details
-    const channel = await User.findOne({username:channelId})
-
-    if(!channel){
-        throw new ApiError(404,'Channel doesnt exist')
+        throw new ApiError(404,'Channel id is required')
     }
 
     // check whether user has subscribed or not
@@ -29,7 +21,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
                     subscriber:req.user?._id
                 },
                 {
-                    channel:channel._id
+                    channel:channelId
                 }
             ]
         })
@@ -46,7 +38,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
         else {
             const subscribed = await Subscription.insertMany([
                 {
-                    channel:channel._id,
+                    channel:channelId,
                     subscriber:req.user?._id
                 }
             ])
@@ -76,20 +68,13 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     const {channelId} = req.params
 
     if(!channelId){
-        throw new ApiError(404,'Channel doesnt exist')
-    }
-
-    //finding the channel details
-    const channel = await User.findOne({username:channelId})
-
-    if(!channel){
-        throw new ApiError(404,'Channel doesnt exist')
+        throw new ApiError(404,'Channel id is required')
     }
 
     const listOfSubscribers = await Subscription.aggregate([
         {
             $match:{
-                channel: new mongoose.Types.ObjectId(channel._id)
+                channel: new mongoose.Types.ObjectId(channelId)
             }
         },
         {
@@ -134,20 +119,13 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     const { subscriberId } = req.params
 
     if(!subscriberId){
-        throw new ApiError(404,'user doesnt exist')
-    }
-
-    //finding the channel details
-    const subscriber = await User.findOne({username:subscriberId})
-
-    if(!subscriber){
-        throw new ApiError(404,'user doesnt exist')
+        throw new ApiError(404,'user id is required')
     }
 
     const listOfChannels = await Subscription.aggregate([
         {
             $match:{
-                subscriber: new mongoose.Types.ObjectId(subscriber._id)
+                subscriber: new mongoose.Types.ObjectId(subscriberId)
             }
         },
         {
