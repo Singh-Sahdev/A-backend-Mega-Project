@@ -12,7 +12,7 @@ const playlistSchema = new mongoose.Schema(
             type:String,
             required:true
         },
-        descriptiojm:{
+        description:{
             type:String
         },
         owner:{

@@ -280,7 +280,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
 const getChannelVideos = asyncHandler(async (req, res) => {
 
-    let allVideos={}
+    let allVideos=[]
 
     try {
         allVideos = await Video.aggregate([

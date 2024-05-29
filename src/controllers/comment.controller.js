@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose, { isValidObjectId } from "mongoose"
 import {Comment} from "../models/comment.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
@@ -8,6 +8,10 @@ const getVideoComments = asyncHandler(async (req, res) => {
     //TODO: get all comments for a video
     const {videoId} = req.params // expecting username of user in params
     const {page = 1, limit = 10} = req.query
+
+    if(!videoId || !isValidObjectId(videoId)){
+        throw new ApiError(404, 'video id is required and should be valid')
+    }
 
     const options = {
         page,
@@ -72,8 +76,8 @@ const addComment = asyncHandler(async (req, res) => {
     const {videoId} = req.params 
     const {comment} = req.body
 
-    if(!videoId){
-        throw new ApiError(404,'video id is required ')
+    if(!videoId || !isValidObjectId(videoId)){
+        throw new ApiError(404, 'video id is required and should be valid')
     }
     if(!comment){
         throw new ApiError(404,'comment is required ')
@@ -108,8 +112,8 @@ const updateComment = asyncHandler(async (req, res) => {
     const {commentId} = req.params 
     const {content} = req.body
 
-    if(!commentId){
-        throw new ApiError(404,'comment id is required ')
+    if(!commentId || !isValidObjectId(commentId)){
+        throw new ApiError(404, 'comment id is required and should be valid')
     }
     if(!content){
         throw new ApiError(404,'comment is required ')
@@ -142,8 +146,8 @@ const deleteComment = asyncHandler(async (req, res) => {
     const {commentId} = req.params
      
 
-    if(!commentId){
-        throw new ApiError(404,'comment id is required ')
+    if(!commentId || !isValidObjectId(commentId)){
+        throw new ApiError(404, 'comment id is required and should be valid')
     }
 
     const comment = await Comment.findById(commentId);

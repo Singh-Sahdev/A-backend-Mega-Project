@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose,{isValidObjectId} from "mongoose"
 import {Like} from "../models/like.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
@@ -8,8 +8,8 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
     const {videoId} = req.params
 
-    if(!videoId){
-        throw new ApiError(404, 'Video Id is required')
+    if(!videoId || !isValidObjectId(videoId)){
+        throw new ApiError(404, 'video id is required and should be valid')
     }
 
     const likedVideo = await Like.findOne({
@@ -52,8 +52,8 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
     const {commentId} = req.params
 
-    if(!commentId){
-        throw new ApiError(404, 'comment Id is required')
+    if(!commentId || !isValidObjectId(commentId)){
+        throw new ApiError(404, 'comment id is required and should be valid')
     }
 
     const likedComment = await Like.findOne({
@@ -95,8 +95,8 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 const toggleTweetLike = asyncHandler(async (req, res) => {
     const {tweetId} = req.params
 
-    if(!tweetId){
-        throw new ApiError(404, 'tweet Id is required')
+    if(!tweetId || !isValidObjectId(tweetId)){
+        throw new ApiError(404, 'tweet id is required and should be valid')
     }
 
     const likedTweet = await Like.findOne({
@@ -136,7 +136,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 )
 
 const getLikedVideos = asyncHandler(async (req, res) => {
-    let likedVideos = {}
+    let likedVideos = []
     try {
         likedVideos = await Like.aggregate([
             {
