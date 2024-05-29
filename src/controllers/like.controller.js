@@ -136,60 +136,82 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 )
 
 const getLikedVideos = asyncHandler(async (req, res) => {
+    let likedVideos = {}
+    try {
+        likedVideos = await Like.aggregate([
+            {
+                $match:{
+                    $and:[
+                        {
+                            likedBy:new mongoose.Types.ObjectId(req.user?._id)
+                        },
+                        {
+                            video:{
+                                $exists:true
+                            }
+                        }
+                    ]
     
-    await Like.aggregate([
-        {
-            $match:{
-                $and:[
-                    {
-                        likedBy:new mongoose.Types.ObjectId(req.user?._id)
-                    },
-                    {
-                        video:{
-                            $exists:true
-                        }
-                    }
-                ]
-
-            }
-        },
-        {
-            $lookup:{
-                from:'videos',
-                localField:'video',
-                foreignField:'_id',
-                as:'Videos',
-                pipeline:[
-                    {
-                        $lookup:{
-                            from:'users',
-                            localField:'owner',
-                            foreignField:'_id',
-                            as:'owner',
-                            pipeline:[
-                                {
-                                    $project:{
-                                        username:1
+                }
+            },
+            {
+                $lookup:{
+                    from:'videos',
+                    localField:'video',
+                    foreignField:'_id',
+                    as:'videos',
+                    pipeline:[
+                        {
+                            $lookup:{
+                                from:'users',
+                                localField:'owner',
+                                foreignField:'_id',
+                                as:'owner',
+                                pipeline:[
+                                    {
+                                        $project:{
+                                            username:1
+                                        }
                                     }
-                                }
-                            ]
+                                ]
+                            }
+                        },
+                        {
+                            $unwind:'$owner'
+                        },
+                        {
+                            $project:{
+                                duration:1,
+                                thumbnail:1,
+                                owner:1,
+                                isPublished:1,
+                                title:1,
+                                views:1,
+                                isPublished:1
+                            }
                         }
-                    },
-                    {
-                        $project:{
-                            duration:1,
-                            thumbnail:1,
-                            owner:1,
-                            isPublished:1,
-                            title:1,
-                            views:1,
-                            isPublished:1
-                        }
-                    }
-                ]
+                    ]
+                }
+            },
+            {
+                $unwind:'$videos'
             }
-        }
-    ])
+        ])
+
+        
+    } catch (error) {
+        throw new ApiError(500, 'Something went wrong while fetching liked videos')
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            likedVideos,
+            'Successfully fetched the liked videos'
+        )
+    )
 
 })
 
