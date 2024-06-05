@@ -5,23 +5,18 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 
 const getVideoComments = asyncHandler(async (req, res) => {
-    //TODO: get all comments for a video
-    const {videoId} = req.params // expecting username of user in params
+
+    const {videoId} = req.params 
     const {page = 1, limit = 10} = req.query
 
     if(!videoId || !isValidObjectId(videoId)){
         throw new ApiError(404, 'video id is required and should be valid')
     }
 
-    const options = {
-        page,
-        limit
-    }
-
-    const commentAggregate = Comment.aggregate([
+    const allComments = Comment.aggregate([
         {
             $match:{
-                video:new mongoose.Types.ObjectId(`${videoId}`)
+                video:new mongoose.Types.ObjectId(videoId)
             }
         },
         {
@@ -40,20 +35,14 @@ const getVideoComments = asyncHandler(async (req, res) => {
                     }
                 ]
             }
+        },
+        {
+            $skip:(page-1)*limit
+        },
+        {
+            $limit:limit
         }
     ])
-
-    let allComments=null;
-    await Comment.aggregatePaginate(commentAggregate,options,(err,result)=>{
-        if(!err){
-            allComments = result.docs
-        }
-        else {
-            throw new ApiError(500,'Something went wrong while fetching the comments')
-        }
-        
-    })
-
 
     if(!allComments){
         throw new ApiError(500,'Something went wrong while fetching the comments')
@@ -178,5 +167,5 @@ export {
     getVideoComments, 
     addComment, 
     updateComment,
-     deleteComment
+    deleteComment
     }
