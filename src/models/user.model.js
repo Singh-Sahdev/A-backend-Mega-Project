@@ -1,6 +1,7 @@
 import mongoose from "mongoose"
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
+import { ApiError } from "../utils/ApiError"
 
 const userSchema = new mongoose.Schema({
     username:{
@@ -25,11 +26,22 @@ const userSchema = new mongoose.Schema({
         index:true
     },
     avatar:{
-        type:String, //url of 3rd party service for file storing
-        required:true,
+        avatarPublicId:{
+            type:String,
+            required:true
+        },
+        avatarUrl:{
+            type:String, //url of 3rd party service for file storing
+            required:true,
+        }
     },
     coverImage:{
-        type:String, //url of 3rd party service for file storing
+        coverImagePublicId:{
+            type:String
+        },
+        coverImageUrl:{
+            type:String, //url of 3rd party service for file storing
+        }
     },
     watchHistory:[
         {
@@ -52,6 +64,24 @@ userSchema.pre('save', async function(next){
     if(!this.isModified('password')) return next();
     this.password = await bcrypt.hash(this.password,10)
     next()
+})
+
+userSchema.post('deleteOne',{document:true,query:false},async function(next){
+    try {
+        const deletedAvatar = await deleteFromCloudinary(this.avatar?.avatarPublicId,'image')
+        if(this.coverImage){
+            const deletedCoverImage = await deleteFromCloudinary(this.coverImage?.coverImagePublicId,'image')
+        }
+        await this.model("Video").deleteMany({owner:this._id})
+        await this.model('Comment').deleteMany({owner:this._id})
+        await this.model('Like').deleteMany({likedBy:this._id})
+        await this.model('Subscription').deleteMany({$or:[{subscriber:req.user?._id},{channel:req.user?._id}]})
+        await this.model('Tweet').deleteMany({owner:req.user?._id})
+        await this.model('Playlist').deleteMany({owner:req.user?._id})
+            
+    } catch (error) {
+        throw new ApiError(500, 'Something went wrong in post middleware in deleting user')
+    }
 })
 
 userSchema.methods.isPasswordCorrect = async function(password){

@@ -1,10 +1,16 @@
-import asyncHandler from "../utils/asyncHandler.js";
+import {asyncHandler} from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import {User} from '../models/user.model.js';
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import jwt from 'jsonwebtoken';
 import mongoose from "mongoose";
+import { Comment } from "../models/comment.model.js";
+import {Like} from '../models/like.model.js'
+import { Video } from "../models/video.model.js";
+import { Subscription } from "../models/subscription.model.js";
+import { Playlist } from "../models/playlist.model.js";
+import { Tweet } from "../models/tweet.model.js";
 
 const options = {
     httpOnly:true,
@@ -84,13 +90,23 @@ const registerUser = asyncHandler(async (req,res)=>{
         throw new ApiError(400,'Avatar file is required')
     }
 
+    const newCoverImage={
+        coverImageUrl:coverImage?.url || '',
+        coverImagePublicId:coverImage?.public_id || ''
+    }
+
+    const newAvatar = {
+        avatarUrl:avatar.url,
+        avatarPublicId:avatar.public_id
+    }
+
     // creating entry in db of the user
     const user = await User.create({
         username:username.toLowerCase(),
         email,
         password,
-        avatar:avatar.url,
-        coverImage:coverImage?.url || '',
+        avatar:newAvatar,
+        coverImage:newCoverImage,
         fullName
     })
 
@@ -321,11 +337,16 @@ const updateUserAvatar = asyncHandler(async (req,res) =>{
         throw new ApiError(500,'Error while uploading avatar file')
     }
 
+    const newAvatar = {
+        avatarUrl:avatar.url,
+        avatarPublicId:avatar.public_id
+    }
+
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set:{
-                avatar:avatar.url
+                avatar:newAvatar
             }
         },
         {new:true}
@@ -357,11 +378,16 @@ const updateUserCoverImage = asyncHandler(async (req,res) =>{
         throw new ApiError(500,'Error while uploading cover image file')
     }
 
+    const newCoverImage={
+        coverImageUrl:coverImage.url,
+        coverImagePublicId:coverImage.public_id
+    }
+
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set:{
-                coverImage:coverImage.url
+                coverImage:newCoverImage
             }
         },
         {new:true}
@@ -521,6 +547,50 @@ const getWatchHistory = asyncHandler( async (req,res) =>{
 
 })
 
+const deleteAccount = asyncHandler(async (req,res) =>{
+
+    // deleting the user from user model
+    const deletedUser = await User.findByIdAndDelete(req.user?._id)
+
+    if(!deletedUser){
+        throw new ApiError(500,'Something went wrong while deleting the user ')
+    }
+
+    // finding the all videos of to be deleted user
+    const videos = await Video.aggregate([
+        {
+            $match:{
+                owner:new mongoose.Types.ObjectId(req.user?._id)
+            }
+        },
+        {
+            $project:{
+                videoFile:1,
+                thumbnail:1
+            }
+        }
+    ])
+
+    // deleting the uploaded videos and thumbnail from the to be deleted user
+    videos.forEach(async (val) => {
+        await deleteFromCloudinary(val.videoFile.videoFilePublicId,'video')
+        await deleteFromCloudinary(val.thumbnail.thumbnailPublicId,'video')
+    })
+
+    return res
+    .status(200)
+    .clearCookie('refreshToken',options)
+    .clearCookie('accessToken',options)
+    .json(
+        new ApiResponse(
+            200,
+            {deletedUser},
+            'Successfully deleted the user'
+        )
+    )
+
+})
+
 export { registerUser,
     loginUser,
     logoutUser,
@@ -531,5 +601,6 @@ export { registerUser,
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
+    deleteAccount
 }

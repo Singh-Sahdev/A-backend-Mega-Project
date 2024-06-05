@@ -11,7 +11,8 @@ import {
     registerUser, 
     updateAccountDetails, 
     updateUserAvatar, 
-    updateUserCoverImage 
+    updateUserCoverImage ,
+    deleteAccount
 } from "../controllers/user.controller.js";
 
 import { upload } from "../middlewares/multer.middleware.js";
@@ -54,6 +55,8 @@ router.route('/update-cover-image').patch(
 router.route('/c/:username').get(verifyJwt,getUserChannelProfile)
 
 router.route('/history').get(verifyJwt,getWatchHistory)
+
+router.route('/delete').delete(verifyJwt,deleteAccount)
 
 //Secured Routes
 router.route('/logout').post(verifyJwt,logoutUser)
