@@ -3,12 +3,15 @@ import {Like} from "../models/like.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
+import { Tweet } from "../models/tweet.model.js"
+import {Comment} from '../models/comment.model.js'
+import {Video} from '../models/video.model.js'
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
 
     const {videoId} = req.params
 
-    if(!videoId || !isValidObjectId(videoId)){
+    if(!isValidObjectId(videoId)){
         throw new ApiError(404, 'video id is required and should be valid')
     }
 
@@ -26,6 +29,11 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         if(!unLike){
             throw new ApiError(500, 'Something went wrong while unliking the video')
         }
+
+        const video = await Video.findById(videoId)
+        video.likes-=1
+        await video.save({validateBeforeSave:false})
+
     }
     else{
         const like = await Like.insertMany([{
@@ -36,6 +44,11 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         if(!like){
             throw new ApiError(500, 'Something went wrong while unliking the video')
         }
+
+        const video = await Video.findById(videoId)
+        video.likes+=1
+        await video.save({validateBeforeSave:false})
+
     }
 
     return res
@@ -52,7 +65,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
     const {commentId} = req.params
 
-    if(!commentId || !isValidObjectId(commentId)){
+    if(!isValidObjectId(commentId)){
         throw new ApiError(404, 'comment id is required and should be valid')
     }
 
@@ -70,6 +83,11 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         if(!unLike){
             throw new ApiError(500, 'Something went wrong while unliking the comment')
         }
+
+        const comment = await Comment.findById(commentId)
+        comment.likes-=1
+        await comment.save({validateBeforeSave:false})
+
     }
     else{
         const like = await Like.insertMany([{
@@ -80,6 +98,9 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         if(!like){
             throw new ApiError(500, 'Something went wrong while unliking the comment')
         }
+        const comment = await Comment.findById(commentId)
+        comment.likes+=1
+        await comment.save({validateBeforeSave:false})
     }
 
     return res
@@ -95,24 +116,28 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 const toggleTweetLike = asyncHandler(async (req, res) => {
     const {tweetId} = req.params
 
-    if(!tweetId || !isValidObjectId(tweetId)){
+    if(!isValidObjectId(tweetId)){
         throw new ApiError(404, 'tweet id is required and should be valid')
     }
 
     const likedTweet = await Like.findOne({
-        tweet:tweetId,
-        likedBy:req.user?._id
+        tweet:tweetId
     })
 
     if(likedTweet){
         const unLike = await Like.deleteOne({
-            tweet:tweetId,
-            likedBy:req.user?._id
+            tweet:tweetId
         })
+
 
         if(!unLike){
             throw new ApiError(500, 'Something went wrong while unliking the tweet')
         }
+
+        const tweet = await Tweet.findById(tweetId)
+        tweet.likes-=1
+        await tweet.save({validateBeforeSave:false})
+
     }
     else{
         const like = await Like.insertMany([{
@@ -123,6 +148,9 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         if(!like){
             throw new ApiError(500, 'Something went wrong while unliking the tweet')
         }
+        const tweet = await Tweet.findById(tweetId)
+        tweet.likes+=1
+        await tweet.save({validateBeforeSave:false})
     }
 
     return res

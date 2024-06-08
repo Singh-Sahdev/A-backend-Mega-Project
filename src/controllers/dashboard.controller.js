@@ -280,6 +280,11 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
 const getChannelVideos = asyncHandler(async (req, res) => {
 
+    let {page = 1, limit = 10} = req.body
+    
+    page = parseInt(page)
+    limit = parseInt(limit)
+
     let allVideos=[]
 
     try {
@@ -319,19 +324,28 @@ const getChannelVideos = asyncHandler(async (req, res) => {
                     owner:1,
     
                 }
+            },
+            {
+                $skip:(page-1)*limit
+            },
+            {
+                $limit:limit
             }
         ])
     } catch (error) {
         throw new ApiError(500, 'Something went wrong while fetching all videos ')
     }
 
+    const totalVideos = allVideos?.length || 0
+    const totalPages = Math.ceil(totalVideos/limit)
+
     return res
     .status(200)
     .json(
         new ApiResponse(
             200,
-            allVideos,
-            'Successfully fetched all videos'
+            {allVideos,totalVideos,totalPages},
+            `Successfully fetched all videos of page no. ${page}`
         )
     )
     

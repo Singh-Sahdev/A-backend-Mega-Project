@@ -9,7 +9,11 @@ const tweetSchema = new mongoose.Schema(
         owner:{
             type:mongoose.Schema.Types.ObjectId,
             ref:'User'
-        }
+        },
+        likes:{
+            type:Number,
+            default:0
+        },
     },
     {timestamps:true}
 )

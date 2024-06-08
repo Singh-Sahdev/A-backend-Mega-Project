@@ -26,20 +26,20 @@ const userSchema = new mongoose.Schema({
         index:true
     },
     avatar:{
-        avatarPublicId:{
+        publicId:{
             type:String,
             required:true
         },
-        avatarUrl:{
+        url:{
             type:String, //url of 3rd party service for file storing
             required:true,
         }
     },
     coverImage:{
-        coverImagePublicId:{
+        publicId:{
             type:String
         },
-        coverImageUrl:{
+        url:{
             type:String, //url of 3rd party service for file storing
         }
     },
@@ -68,9 +68,9 @@ userSchema.pre('save', async function(next){
 
 userSchema.post('deleteOne',{document:true,query:false},async function(next){
     try {
-        const deletedAvatar = await deleteFromCloudinary(this.avatar?.avatarPublicId,'image')
+        const deletedAvatar = await deleteFromCloudinary(this.avatar?.publicId,'image')
         if(this.coverImage){
-            const deletedCoverImage = await deleteFromCloudinary(this.coverImage?.coverImagePublicId,'image')
+            const deletedCoverImage = await deleteFromCloudinary(this.coverImage?.publicId,'image')
         }
         await this.model("Video").deleteMany({owner:this._id})
         await this.model('Comment').deleteMany({owner:this._id})

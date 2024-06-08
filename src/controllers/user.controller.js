@@ -5,12 +5,7 @@ import {User} from '../models/user.model.js';
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import jwt from 'jsonwebtoken';
 import mongoose from "mongoose";
-import { Comment } from "../models/comment.model.js";
-import {Like} from '../models/like.model.js'
 import { Video } from "../models/video.model.js";
-import { Subscription } from "../models/subscription.model.js";
-import { Playlist } from "../models/playlist.model.js";
-import { Tweet } from "../models/tweet.model.js";
 
 const options = {
     httpOnly:true,
@@ -46,9 +41,7 @@ const registerUser = asyncHandler(async (req,res)=>{
 
     // validate text data
     if(
-        [fullName,username,email,password].some( item => (
-            item?.trim()===''
-        ))
+        [fullName,username,email,password].some( item => !item?.trim())
     ){
         throw new ApiError(400, 'All fields are required')
     }
@@ -91,13 +84,13 @@ const registerUser = asyncHandler(async (req,res)=>{
     }
 
     const newCoverImage={
-        coverImageUrl:coverImage?.url || '',
-        coverImagePublicId:coverImage?.public_id || ''
+        url:coverImage?.url || '',
+        publicId:coverImage?.public_id || ''
     }
 
     const newAvatar = {
-        avatarUrl:avatar.url,
-        avatarPublicId:avatar.public_id
+        url:avatar.url,
+        publicId:avatar.public_id
     }
 
     // creating entry in db of the user
@@ -296,16 +289,18 @@ const getCurrentUser = asyncHandler(async (req,res) =>{
 const updateAccountDetails = asyncHandler(async (req,res) =>{
     const {fullName,email} = req.body
 
-    if(!fullName || !email){
-        throw new ApiError(400,'all fields are required')
+    if(
+        [fullName,email].every( it => !it?.trim())
+    ){
+        throw new ApiError(404,'At least 1 field is required')
     }
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set:{
-                fullName,
-                email
+                fullName:fullName?fullName:req.user?.fullName,
+                email:email?email:req.user?.email
             }
         },
         {new:true}
@@ -338,8 +333,8 @@ const updateUserAvatar = asyncHandler(async (req,res) =>{
     }
 
     const newAvatar = {
-        avatarUrl:avatar.url,
-        avatarPublicId:avatar.public_id
+        url:avatar.url,
+        publicId:avatar.public_id
     }
 
     const user = await User.findByIdAndUpdate(
@@ -379,8 +374,8 @@ const updateUserCoverImage = asyncHandler(async (req,res) =>{
     }
 
     const newCoverImage={
-        coverImageUrl:coverImage.url,
-        coverImagePublicId:coverImage.public_id
+        url:coverImage.url,
+        publicId:coverImage.public_id
     }
 
     const user = await User.findByIdAndUpdate(
@@ -573,8 +568,8 @@ const deleteAccount = asyncHandler(async (req,res) =>{
 
     // deleting the uploaded videos and thumbnail from the to be deleted user
     videos.forEach(async (val) => {
-        await deleteFromCloudinary(val.videoFile.videoFilePublicId,'video')
-        await deleteFromCloudinary(val.thumbnail.thumbnailPublicId,'video')
+        await deleteFromCloudinary(val.videoFile.publicId,'video')
+        await deleteFromCloudinary(val.thumbnail.publicId,'image')
     })
 
     return res

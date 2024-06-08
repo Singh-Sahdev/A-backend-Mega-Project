@@ -7,11 +7,12 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 const createPlaylist = asyncHandler(async (req, res) => {
 
-    const {name, description} = req.body
+    let {name, description} = req.body
 
-    if(!name){
+    if(!name?.trim()){
         throw new ApiError(404, 'playlist name is required')
     }
+    
     description = description?description:''
 
     const playlist = await Playlist.insertMany([{
@@ -98,7 +99,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
 
     const {playlistId} = req.params
 
-    if(!playlistId || !isValidObjectId(playlistId)){
+    if(!isValidObjectId(playlistId)){
         throw new ApiError(404, 'playlistId is required and should be valid ')
     }
 
@@ -171,7 +172,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
     const {playlistId, videoId} = req.params
 
-    if(!playlistId || !videoId || !isValidObjectId(videoId) || !isValidObjectId(playlistId)){
+    if(!isValidObjectId(videoId) || !isValidObjectId(playlistId)){
         throw new ApiError(404, 'both playlist id and video id are required and should be valid ')
     }
 
@@ -202,7 +203,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     const {playlistId, videoId} = req.params
 
-    if(!playlistId || !videoId || !isValidObjectId(videoId) || !isValidObjectId(playlistId)){
+    if(!isValidObjectId(videoId) || !isValidObjectId(playlistId)){
         throw new ApiError(404, 'both playlist id and video id are required and should be valid ')
     }
 
@@ -233,7 +234,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 const deletePlaylist = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
 
-    if(!playlistId || !isValidObjectId(playlistId)){
+    if(!isValidObjectId(playlistId)){
         throw new ApiError(404, 'playlistId is required and should be valid ')
     }
 
@@ -257,15 +258,17 @@ const deletePlaylist = asyncHandler(async (req, res) => {
 
 const updatePlaylist = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
-    const {name, description} = req.body
+    let {name, description} = req.body
 
-    if(!playlistId || !isValidObjectId(playlistId)){
+    if(!isValidObjectId(playlistId)){
         throw new ApiError(404, 'playlistId is required and should be valid ')
     }
 
-    if(!name && !description){
-        throw new ApiError(404, 'either name or description is required')
+    if(!name?.trim()){
+        throw new ApiError(404, 'playlist name is required')
     }
+
+    description = description?.trim()?description:''
 
     const playlist = await Playlist.findById(playlistId)
     playlist?.name = name?name:playlist?.name

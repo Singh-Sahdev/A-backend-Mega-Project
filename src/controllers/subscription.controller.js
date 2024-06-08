@@ -9,7 +9,7 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 const toggleSubscription = asyncHandler(async (req, res) => {
     const {channelId} = req.params
 
-    if(!channelId || !isValidObjectId(channelId)){
+    if(!isValidObjectId(channelId)){
         throw new ApiError(404, 'channel id is required and should be valid')
     }
 
@@ -67,7 +67,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     const {channelId} = req.params
 
-    if(!channelId || !isValidObjectId(channelId)){
+    if(!isValidObjectId(channelId)){
         throw new ApiError(404, 'channel id is required and should be valid')
     }
 
@@ -82,19 +82,21 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
                 from:'users',
                 localField:'subscriber',
                 foreignField:'_id',
-                as:'subscriberInfo'
+                as:'subscriberInfo',
+                pipeline:[
+                    {
+                        $project:{
+                            username:1,
+                            fullName:1,
+                            avatar:1,
+                            email:1
+                        }
+                    }
+                ]
             }
         },
         {
-            $unwind:'$subsciberInfo'
-        },
-        {
-            $project:{
-                username:'$subsriberInfo.username',
-                fullName:'$subsriberInfo.fullName',
-                avatar:'$subsriberInfo.avatar',
-                email:'$subsriberInfo.email'
-            }
+            $unwind:'$subscriberInfo'
         }
     ])
 
@@ -118,7 +120,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 const getSubscribedChannels = asyncHandler(async (req, res) => {
     const { subscriberId } = req.params
 
-    if(!subscriberId || !isValidObjectId(subscriberId)){
+    if(!isValidObjectId(subscriberId)){
         throw new ApiError(404, 'subscriber id is required and should be valid')
     }
 
@@ -133,19 +135,21 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
                 from:'users',
                 localField:'channel',
                 foreignField:'_id',
-                as:'channelInfo'
+                as:'channelInfo',
+                pipeline:[
+                    {
+                        $project:{
+                            username:1,
+                            fullName:1,
+                            avatar:1,
+                            email:1
+                        }
+                    }
+                ]
             }
         },
         {
             $unwind:'$channelInfo'
-        },
-        {
-            $project:{
-                username:'$channelInfo.username',
-                fullName:'$channelInfo.fullName',
-                avatar:'$channelInfo.avatar',
-                email:'$channelInfo.email'
-            }
         }
     ])
 

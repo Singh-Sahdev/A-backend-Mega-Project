@@ -7,13 +7,15 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 const getVideoComments = asyncHandler(async (req, res) => {
 
     const {videoId} = req.params 
-    const {page = 1, limit = 10} = req.query
+    let {page = 1, limit = 10} = req.query
+    page = parseInt(page)
+    limit = parseInt(limit)
 
-    if(!videoId || !isValidObjectId(videoId)){
+    if(!isValidObjectId(videoId)){
         throw new ApiError(404, 'video id is required and should be valid')
     }
 
-    const allComments = Comment.aggregate([
+    const allComments = await Comment.aggregate([
         {
             $match:{
                 video:new mongoose.Types.ObjectId(videoId)
@@ -48,12 +50,15 @@ const getVideoComments = asyncHandler(async (req, res) => {
         throw new ApiError(500,'Something went wrong while fetching the comments')
     }
 
+    const totalComments = allComments.length
+    const totalPages = Math.ceil(totalComments/limit)
+    
     return res
     .status(200)
     .json(
         new ApiResponse(
             200,
-            allComments,
+            {allComments,totalComments,totalPages},
             'Successfully fetched all the comments'
         )
     )
@@ -65,10 +70,10 @@ const addComment = asyncHandler(async (req, res) => {
     const {videoId} = req.params 
     const {comment} = req.body
 
-    if(!videoId || !isValidObjectId(videoId)){
+    if(!isValidObjectId(videoId)){
         throw new ApiError(404, 'video id is required and should be valid')
     }
-    if(!comment){
+    if(!comment?.trim()){
         throw new ApiError(404,'comment is required ')
     }
 
@@ -101,10 +106,10 @@ const updateComment = asyncHandler(async (req, res) => {
     const {commentId} = req.params 
     const {content} = req.body
 
-    if(!commentId || !isValidObjectId(commentId)){
+    if(!isValidObjectId(commentId)){
         throw new ApiError(404, 'comment id is required and should be valid')
     }
-    if(!content){
+    if(!content?.trim()){
         throw new ApiError(404,'comment is required ')
     }
 
@@ -135,7 +140,7 @@ const deleteComment = asyncHandler(async (req, res) => {
     const {commentId} = req.params
      
 
-    if(!commentId || !isValidObjectId(commentId)){
+    if(!isValidObjectId(commentId)){
         throw new ApiError(404, 'comment id is required and should be valid')
     }
 
