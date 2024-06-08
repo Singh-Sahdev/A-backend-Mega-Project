@@ -4,7 +4,7 @@ import { app } from "./app.js";
 
 dotenv.config({path:'./.env'})
 
-connectDB()
+connectDB
 .then(()=>{
     app.on('error',(error)=>{
         console.log(`App connection failed = ${error}`);
