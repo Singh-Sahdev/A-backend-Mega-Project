@@ -3,21 +3,21 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const videoSchema = new mongoose.Schema({
     videoFile:{
-        videoFilePublicId:{
+        publicId:{
             type:String, 
             required:true
         },
-        videoFileUrl:{
+        url:{
             type:String, // url
             required:true
         }
     },
     thumbnail:{
-        thumbnailPublicId:{
+        publicId:{
             type:String,
             required:true
         },
-        thumbnailUrl:{
+        url:{
             type:String,
             required:true
         }
@@ -38,6 +38,10 @@ const videoSchema = new mongoose.Schema({
         type:Number,
         default:0
     },
+    likes:{
+        type:Number,
+        default:0
+    },
     isPublished:{
         type:Boolean,
         default:true
@@ -50,5 +54,27 @@ const videoSchema = new mongoose.Schema({
 },{timestamps:true})
 
 videoSchema.plugin(mongooseAggregatePaginate) // for using complex aggregation queries on mongoDB
+
+videoSchema.pre('save',async function(next){
+    if(this.isModified('videoFile')){
+        const deleteVideo = await deleteFromCloudinary(this.videoFile?.publicId,'video')
+    }
+    if(this.isModified('thumbnail')){
+        const deleteThumbnail = await deleteFromCloudinary(this.thumbnail?.publicId,'image')
+    }
+    next()
+})
+
+videoSchema.post('deleteOne',{document:true,query:false},async function(next){
+    try {
+        const deletedVideo = await deleteFromCloudinary(this.videoFile?.publicId,'video')
+        const deldetedThumbnail = await deleteFromCloudinary(this.thumbnail?.publicId,'image')
+        await this.model('Comment').deleteMany({video:this._id})
+        await this.model('Like').deleteMany({video:this._id})
+            
+    } catch (error) {
+        throw new ApiError(500, 'Something went wrong in post middleware in deleting video')
+    }
+})
 
 export const Video = mongoose.model('Video',videoSchema)
