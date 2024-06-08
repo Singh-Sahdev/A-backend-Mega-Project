@@ -214,7 +214,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     }
 
     try {
-        playlist?.video = playlist?.video.filter( id => id!=videoId)
+        playlist.video = playlist?.video.filter( id => id!=videoId)
         await playlist?.save({validateBeforeSave:false})
     } catch (error) {
         throw new ApiError(500, 'Something went wrong while removing video from playlist')
@@ -271,8 +271,8 @@ const updatePlaylist = asyncHandler(async (req, res) => {
     description = description?.trim()?description:''
 
     const playlist = await Playlist.findById(playlistId)
-    playlist?.name = name?name:playlist?.name
-    playlist?.description = description?description:playlist?.description
+    playlist.name = name?name:playlist?.name
+    playlist.description = description?description:playlist?.description
 
     try {
         await playlist.save({validateBeforeSave:false})

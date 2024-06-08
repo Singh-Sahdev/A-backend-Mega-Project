@@ -232,8 +232,8 @@ const updateVideo = asyncHandler(async (req, res) => {
         if(!uploadVideo){
             throw new ApiError(500, 'Something went wrong while uploading the video ')
         }
-        video.videoFile?.url = uploadVideo.url
-        video.videoFile?.publicId = uploadVideo.public_id
+        video.videoFile.url = uploadVideo.url
+        video.videoFile.publicId = uploadVideo.public_id
 
     }
 
@@ -242,8 +242,8 @@ const updateVideo = asyncHandler(async (req, res) => {
         if(!uploadThumbnail){
             throw new ApiError(500, 'Something went wrong while uploading the thumbnail ')
         }
-        video.thumbnail?.url = uploadThumbnail.url
-        video.thumbnail?.publicId = uploadThumbnail.public_id
+        video.thumbnail.url = uploadThumbnail.url
+        video.thumbnail.publicId = uploadThumbnail.public_id
         
     }
 

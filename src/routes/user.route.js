@@ -16,7 +16,7 @@ import {
 } from "../controllers/user.controller.js";
 
 import { upload } from "../middlewares/multer.middleware.js";
-import { verifyJwt } from "../middlewares/auth.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router()
 
@@ -36,33 +36,33 @@ router.route('/register').post(
 
 router.route('/login').post(loginUser)
 
-router.route('/get-current-user').get(verifyJwt,getCurrentUser)
+router.route('/get-current-user').get(verifyJWT,getCurrentUser)
 
-router.route('/update-account-details').patch(verifyJwt,updateAccountDetails)
+router.route('/update-account-details').patch(verifyJWT,updateAccountDetails)
 
 router.route('/update-avatar').patch(
-    verifyJwt,
+    verifyJWT,
     upload.single('avatar'),
     updateUserAvatar
 )
 
 router.route('/update-cover-image').patch(
-    verifyJwt,
+    verifyJWT,
     upload.single('coverImage'),
     updateUserCoverImage
 )
 
-router.route('/c/:username').get(verifyJwt,getUserChannelProfile)
+router.route('/c/:username').get(verifyJWT,getUserChannelProfile)
 
-router.route('/history').get(verifyJwt,getWatchHistory)
+router.route('/history').get(verifyJWT,getWatchHistory)
 
-router.route('/delete').delete(verifyJwt,deleteAccount)
+router.route('/delete').delete(verifyJWT,deleteAccount)
 
 //Secured Routes
-router.route('/logout').post(verifyJwt,logoutUser)
+router.route('/logout').post(verifyJWT,logoutUser)
 
 router.route('/refresh-token').post(refreshAccessToken)
 
-router.route('/change-password').post(verifyJwt,changeCurrentPassword)
+router.route('/change-password').post(verifyJWT,changeCurrentPassword)
 
 export default router
