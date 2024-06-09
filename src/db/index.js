@@ -9,4 +9,4 @@ export const connectDB = (async ()=>{
     catch(err){
         console.log("DB_CONN_ERR = ", err);
     }
-})()
+})() 
