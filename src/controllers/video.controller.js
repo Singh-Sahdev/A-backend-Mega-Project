@@ -14,10 +14,51 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     sortType = sortType === "ascending" ? 1 : -1
 
+
+    // This video fetching is done on comparing the title and description of the video with the query given in the params
+    // and priortising the title over description
+
     const videos = await Video.aggregate([
         {
             $match:{
-                title:query
+                $or:[
+                    {title:{ $regex: query, $options: 'i' }},
+                    {description:{ $regex: query, $options: 'i' }}
+                ],
+                isActive:true,
+                isPublished:true
+            }
+        },
+        {
+            $addFields: {
+                priority: {
+                    $switch: {
+                        branches:[
+                            {
+                                case: { $regexMatch: { input: "$title", regex: `^${query}`, options: 'i' } },
+                                then:0
+                            },
+                            {
+                                case: { $regexMatch: { input: "$description", regex: `^${query}`, options: 'i' } },
+                                then:1
+                            },
+                            {
+                                case: { $regexMatch: { input: "$title", regex: query, options: 'i' } },
+                                then:2
+                            },
+                            {
+                                case: { $regexMatch: { input: "$description", regex: query, options: 'i' } },
+                                then:3
+                            },
+                        ],
+                        default:4
+                    }
+                }
+            }
+        },
+        {
+            $sort: {
+                priority: 1,
             }
         },
         {
@@ -268,7 +309,10 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 })
 
-const deleteVideo = asyncHandler(async (req, res) => {
+// We should never delete a entry from database, we may delete the video of any related file from cloud or third party service but
+// we should not delete its db entry, either we can make its isdeleted(or any other related field) field true
+
+const deleteVideo = asyncHandler(async (req, res) => {  
 
     const { videoId } = req.params
 
@@ -276,7 +320,12 @@ const deleteVideo = asyncHandler(async (req, res) => {
         throw new ApiError(404, 'Invalid video Id')
     }
 
-    const deletedVideo = await Video.findByIdAndDelete(videoId)
+    const deletedVideo = await Video.findByIdAndUpdate(videoId,
+        {
+            isActive : false
+        },
+        {new:true}
+    )
 
     if(!deletedVideo){
         throw new ApiError(500,'Something went wrong while deleting the video')

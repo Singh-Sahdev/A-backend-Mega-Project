@@ -48,7 +48,8 @@ const registerUser = asyncHandler(async (req,res)=>{
 
     // check whether user already exist or not
     const existedUser = await User.findOne({
-        $or:[{ email },{ username }]
+        $or:[{ email },{ username }],
+        isActive:true
     })
 
     if(existedUser){
@@ -129,12 +130,13 @@ const loginUser = asyncHandler(async (req,res) => {
 
     // finding the user
     const user = await User.findOne({
-        $or:[{email},{username}]
+        $or:[{email},{username}],
+        isActive:true
     })
 
     // validating the user 
     if(!user){
-        throw new ApiError(401,'User doesnt exist')
+        throw new ApiError(401,'User doesnt exist, or Already deleted')
     }
 
     // checking the password of existing user
@@ -545,7 +547,12 @@ const getWatchHistory = asyncHandler( async (req,res) =>{
 const deleteAccount = asyncHandler(async (req,res) =>{
 
     // deleting the user from user model
-    const deletedUser = await User.findByIdAndDelete(req.user?._id)
+    const deletedUser = await User.findByIdAndUpdate(req.user?._id,
+        {
+            isActive:false
+        },
+        {new:true}
+    )
 
     if(!deletedUser){
         throw new ApiError(500,'Something went wrong while deleting the user ')
@@ -560,6 +567,7 @@ const deleteAccount = asyncHandler(async (req,res) =>{
         },
         {
             $project:{
+                _id:1,
                 videoFile:1,
                 thumbnail:1
             }
@@ -568,6 +576,11 @@ const deleteAccount = asyncHandler(async (req,res) =>{
 
     // deleting the uploaded videos and thumbnail from the to be deleted user
     videos.forEach(async (val) => {
+        const v = await Video.findByIdAndUpdate(val._id,
+            {
+                isActive:false
+            }
+        )
         await deleteFromCloudinary(val.videoFile.publicId,'video')
         await deleteFromCloudinary(val.thumbnail.publicId,'image')
     })
