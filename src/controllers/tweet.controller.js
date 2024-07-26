@@ -12,12 +12,12 @@ const createTweet = asyncHandler(async (req, res) => {
         throw new ApiError(404, 'Content of tweet is required')
     }
 
-    const tweet = await Tweet.insertMany([
+    const tweet = await Tweet.create(
         {
             content,
             owner:req.user?._id
         }
-    ])
+    )
 
     if(!tweet){
         throw new ApiError(500, 'Something went wrong while adding tweet')
@@ -30,6 +30,46 @@ const createTweet = asyncHandler(async (req, res) => {
             201,
             tweet,
             'Successfully added a tweet'
+        )
+    )
+
+})
+
+const getAllTweets = asyncHandler( async(req,res) =>{
+
+    const allTweets = await Tweet.aggregate([
+        {
+            $lookup:{
+                from:'users',
+                localField:'owner',
+                foreignField:'_id',
+                as:'owner',
+                pipeline:[
+                    {
+                        $project:{
+                            username:1,
+                            fullName:1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind:'$owner'
+        },
+    ])
+
+    if(!allTweets){
+        throw new ApiError(500, 'Something went wrong while fetching all the tweets')
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            allTweets,
+            'Successfully fetched all the tweets'
         )
     )
 
@@ -99,7 +139,7 @@ const updateTweet = asyncHandler(async (req, res) => {
 
     const tweet = await Tweet.findById(tweetId)
 
-    if(!tweet || tweet.owner != req.user?._id){
+    if(!tweet || String(tweet.owner) != String(req.user?._id)){
         throw new ApiError(401, 'Either tweet doesn`t exist or trying to update some other user`s tweet')
     }
     
@@ -139,11 +179,16 @@ const deleteTweet = asyncHandler(async (req, res) => {
 
     const tweet = await Tweet.findById(tweetId)
 
-    if(!tweet || tweet.owner != req.user?._id){
+    if(!tweet || String(tweet.owner) != String(req.user?._id)){
         throw new ApiError(401, 'Either tweet doesn`t exist or trying to delete some other user`s tweet')
     }
 
-    const deletedTweet = await Tweet.deleteOne({_id:tweetId})
+    const deletedTweet = await Tweet.findByIdAndUpdate(tweetId,
+        {
+            isActive : false
+        },
+        {new:true}
+    )
 
     if(!deletedTweet){
         throw new ApiError(500,'Something went wrong while deleting the tweet')
@@ -164,6 +209,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
 export {
     createTweet,
     getUserTweets,
+    getAllTweets,
     updateTweet,
     deleteTweet
 }

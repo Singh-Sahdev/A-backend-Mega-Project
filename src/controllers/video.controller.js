@@ -17,9 +17,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     // This video fetching is done on comparing the title and description of the video with the query given in the params
     // and priortising the title over description
-
-    const videos = await Video.aggregate([
-        {
+    let tempPipeline = []
+    if(query){
+        tempPipeline.push({
             $match:{
                 $or:[
                     {title:{ $regex: query, $options: 'i' }},
@@ -28,39 +28,49 @@ const getAllVideos = asyncHandler(async (req, res) => {
                 isActive:true,
                 isPublished:true
             }
-        },
-        {
-            $addFields: {
-                priority: {
-                    $switch: {
-                        branches:[
-                            {
-                                case: { $regexMatch: { input: "$title", regex: `^${query}`, options: 'i' } },
-                                then:0
-                            },
-                            {
-                                case: { $regexMatch: { input: "$description", regex: `^${query}`, options: 'i' } },
-                                then:1
-                            },
-                            {
-                                case: { $regexMatch: { input: "$title", regex: query, options: 'i' } },
-                                then:2
-                            },
-                            {
-                                case: { $regexMatch: { input: "$description", regex: query, options: 'i' } },
-                                then:3
-                            },
-                        ],
-                        default:4
-                    }
-                }
-            }
-        },
-        {
-            $sort: {
-                priority: 1,
-            }
-        },
+        })
+    }
+
+    const videos = await Video.aggregate([
+        ...tempPipeline, // If no query present, then fetch all the videos
+
+        /*
+            These stages help to sort the searched videos depending upon the presence of query 
+            in title or description or at beginning or ending priority wise
+        */
+        // {
+        //     $addFields: {
+        //         priority: {
+        //             $switch: {
+        //                 branches:[
+        //                     {
+        //                         case: { $regexMatch: { input: "$title", regex: `^${query}`, options: 'i' } },
+        //                         then:0
+        //                     },
+        //                     {
+        //                         case: { $regexMatch: { input: "$description", regex: `^${query}`, options: 'i' } },
+        //                         then:1
+        //                     },
+        //                     {
+        //                         case: { $regexMatch: { input: "$title", regex: query, options: 'i' } },
+        //                         then:2
+        //                     },
+        //                     {
+        //                         case: { $regexMatch: { input: "$description", regex: query, options: 'i' } },
+        //                         then:3
+        //                     },
+        //                 ],
+        //                 default:4
+        //             }
+        //         }
+        //     }
+        // },
+        // {
+        //     $sort: {
+        //         priority: 1,
+        //     }
+        // },
+        
         {
             $lookup:{
                 from:'users',

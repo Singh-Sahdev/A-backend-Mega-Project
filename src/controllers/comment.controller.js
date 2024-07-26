@@ -150,7 +150,12 @@ const deleteComment = asyncHandler(async (req, res) => {
         throw new ApiError(401,`Either comment id is invalid or trying to delete other user's comment`)
     }
     
-    const deletedComment = await Comment.findByIdAndDelete(commentId)
+    const deletedComment = await Comment.findByIdAndUpdate(commentId,
+        {
+            isActive : false
+        },
+        {new:true}
+    )
 
     if(!deletedComment){
         throw new ApiError(500,'something went wrong while deleting comment')

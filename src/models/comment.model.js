@@ -18,6 +18,10 @@ const commentSchema = new mongoose.Schema(
         owner:{
             type:mongoose.Schema.Types.ObjectId,
             ref:'User'
+        },
+        isActive:{
+            type:Boolean,
+            default:true
         }
     },
     {

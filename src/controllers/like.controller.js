@@ -36,10 +36,10 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
     }
     else{
-        const like = await Like.insertMany([{
+        const like = await Like.create({
             video:videoId,
             likedBy:req.user?._id
-        }])
+        })
 
         if(!like){
             throw new ApiError(500, 'Something went wrong while unliking the video')
@@ -90,10 +90,10 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
     }
     else{
-        const like = await Like.insertMany([{
+        const like = await Like.create({
             comment:commentId,
             likedBy:req.user?._id
-        }])
+        })
 
         if(!like){
             throw new ApiError(500, 'Something went wrong while unliking the comment')
@@ -140,10 +140,10 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
     }
     else{
-        const like = await Like.insertMany([{
+        const like = await Like.create({
             tweet:tweetId,
             likedBy:req.user?._id
-        }])
+        })
 
         if(!like){
             throw new ApiError(500, 'Something went wrong while unliking the tweet')
@@ -187,7 +187,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                     from:'videos',
                     localField:'video',
                     foreignField:'_id',
-                    as:'videos',
+                    as:'video',
                     pipeline:[
                         {
                             $lookup:{
@@ -222,7 +222,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                 }
             },
             {
-                $unwind:'$videos'
+                $unwind:'$video'
             }
         ])
 
