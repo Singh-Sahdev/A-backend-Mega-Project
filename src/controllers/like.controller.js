@@ -46,6 +46,9 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         }
 
         const video = await Video.findById(videoId)
+        if(!video){
+            throw new ApiError(404, 'No video of such id exists ')
+        }
         video.likes+=1
         await video.save({validateBeforeSave:false})
 
@@ -99,6 +102,9 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
             throw new ApiError(500, 'Something went wrong while unliking the comment')
         }
         const comment = await Comment.findById(commentId)
+        if(!comment){
+            throw new ApiError(404, 'No comment of such id exists ')
+        }
         comment.likes+=1
         await comment.save({validateBeforeSave:false})
     }
@@ -121,12 +127,14 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
     }
 
     const likedTweet = await Like.findOne({
-        tweet:tweetId
+        tweet:tweetId,
+        likedBy:req.user?._id
     })
 
     if(likedTweet){
         const unLike = await Like.deleteOne({
-            tweet:tweetId
+            tweet:tweetId,
+            likedBy:req.user?._id
         })
 
 
@@ -149,6 +157,9 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
             throw new ApiError(500, 'Something went wrong while unliking the tweet')
         }
         const tweet = await Tweet.findById(tweetId)
+        if(!tweet){
+            throw new ApiError(404, 'No tweet of such id exists ')
+        }
         tweet.likes+=1
         await tweet.save({validateBeforeSave:false})
     }

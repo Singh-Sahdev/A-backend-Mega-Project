@@ -8,7 +8,7 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 const getChannelStats = asyncHandler(async (req, res) => {
 
-    const channelStats={
+    let channelStats={
         totalViews:0,
         totalSubscribers:0,
         totalVideos:0,
@@ -46,8 +46,11 @@ const getChannelStats = asyncHandler(async (req, res) => {
     if(!getViews){
         throw new ApiError(500, ' Something went wrong while fetching total views ')
     }
+    else if(!getViews.length){
+        channelStats.totalViews = 0
+    }
     else{
-        channelStats.totalLikes = getViews[0].views
+        channelStats.totalViews = getViews[0].views
     }
 
     // fetching total subscribers
@@ -75,6 +78,9 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
     if(!getSubscribers){
         throw new ApiError(500, ' Something went wrong while fetching total subscribers ')
+    }
+    else if(!getSubscribers.length){
+        channelStats.totalSubscribers = 0
     }
     else{
         channelStats.totalSubscribers = getSubscribers[0].subscibers
@@ -105,6 +111,9 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
     if(!getVideos){
         throw new ApiError(500, ' Something went wrong while fetching total Videos ')
+    }
+    else if(!getVideos.length){
+        channelStats.totalVideos = 0
     }
     else{
         channelStats.totalVideos = getVideos[0].videos
@@ -146,6 +155,9 @@ const getChannelStats = asyncHandler(async (req, res) => {
     if(!getVideoLikes){
         throw new ApiError(500, 'Something went wrong while fetching total video likes')
     }
+    else if(!getVideoLikes.length){
+        channelStats.totalLikes.totalVideoLikes = 0
+    }
     else{
         channelStats.totalLikes.totalVideoLikes = getVideoLikes[0].videoLikes
     }
@@ -184,6 +196,10 @@ const getChannelStats = asyncHandler(async (req, res) => {
     if(!getTweetLikes){
         throw new ApiError(500, 'Something went wrong while fetching total tweet likes')
     }
+    else if(!getTweetLikes.length){
+        
+        channelStats.totalLikes.totalTweetLikes = 0
+    }
     else{
         channelStats.totalLikes.totalTweetLikes = getTweetLikes[0].tweetLikes
     }
@@ -221,6 +237,9 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
     if(!getCommentLikes){
         throw new ApiError(500, 'Something went wrong while fetching total comment likes')
+    }
+    else if(!getCommentLikes.length){
+        channelStats.totalLikes.totalCommentLikes = 0
     }
     else{
         channelStats.totalLikes.totalCommentLikes = getCommentLikes[0].commentLikes
@@ -261,6 +280,9 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
     if(!getComment){
         throw new ApiError(500, 'Something went wrong while fetching total comments')
+    }
+    else if(!getComment.length){
+        channelStats.totalComments = 0
     }
     else{
         channelStats.totalComments = getComment[0].comments
@@ -354,4 +376,4 @@ const getChannelVideos = asyncHandler(async (req, res) => {
 export {
     getChannelStats, 
     getChannelVideos
-    }
+}

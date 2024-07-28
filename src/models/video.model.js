@@ -68,7 +68,7 @@ videoSchema.pre('save',async function(next){
         if(this.isModified('thumbnail')){
             const deleteThumbnail = await deleteFromCloudinary(this.thumbnail?.publicId,'image')
         }
-        if(this.isModified('isActive')){
+        if(this.isModified('isActive') && !this.isActive){
             const deletedVideo = await deleteFromCloudinary(this.videoFile?.publicId,'video')
             const deldetedThumbnail = await deleteFromCloudinary(this.thumbnail?.publicId,'image')
         }

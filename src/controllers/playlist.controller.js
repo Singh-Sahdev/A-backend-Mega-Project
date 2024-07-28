@@ -15,12 +15,12 @@ const createPlaylist = asyncHandler(async (req, res) => {
     
     description = description?description:''
 
-    const playlist = await Playlist.insertMany([{
+    const playlist = await Playlist.create({
         videos:[],
         name,
         description,
         owner:req.user?._id
-    }])
+    })
 
     if(!playlist){
         throw new ApiError(500,'Something went wrong while creating playlist')
@@ -182,19 +182,29 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
         throw new ApiError(500, 'Something went wrong while fetching the playlist')
     }
 
-    try {
-        playlist?.video.push(videoId)
-        await playlist?.save({validateBeforeSave:false})
-    } catch (error) {
-        throw new ApiError(500, 'Something went wrong while adding video to playlist')
+    // Handling the case whether the video already present in the playlist or not
+    
+    if(playlist.video.includes(videoId)){
+        throw new ApiError(409,'the Video already exist in the playlist') // 409 status code for CONFLICT cases
     }
+    else{
+        try {
+            playlist?.video.push(videoId)
+            await playlist?.save({validateBeforeSave:false})
+        } catch (error) {
+            throw new ApiError(500, 'Something went wrong while adding video to playlist')
+        }
+    }
+    
 
     return res
     .status(200)
     .json(
-        200,
-        playlist,
-        'Successfully added the video to playlist'
+        new ApiResponse(
+            200,
+            playlist,
+            'Successfully added the video to playlist'
+        )
     )
 
 
@@ -213,6 +223,9 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
         throw new ApiError(500, 'Something went wrong while fetching the playlist')
     }
 
+    if(!playlist.video.includes(videoId)){
+        throw new ApiError(409,'the Video does not exist in the playlist') // 409 status code for CONFLICT cases
+    }
     try {
         playlist.video = playlist?.video.filter( id => id!=videoId)
         await playlist?.save({validateBeforeSave:false})
@@ -223,9 +236,11 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     return res
     .status(200)
     .json(
-        200,
-        playlist,
-        'Successfully removed the video from playlist'
+        new ApiResponse(
+            200,
+            playlist,
+            'Successfully added the video to playlist'
+        )
     )
 
 
@@ -239,7 +254,9 @@ const deletePlaylist = asyncHandler(async (req, res) => {
     }
 
     try {
-        await Playlist.findByIdAndDelete(playlistId)
+        var deletedPlaylist = await Playlist.findByIdAndUpdate(playlistId,{
+            isActive:false
+        })
     } catch (error) {
         throw new ApiError(500, 'Something went wrong while deleting the playlist')
     }
@@ -249,7 +266,7 @@ const deletePlaylist = asyncHandler(async (req, res) => {
     .json(
         new ApiResponse(
             200,
-            {},
+            {deletedPlaylist},
             'SUccessfully deleted the playlist'
         )
     )

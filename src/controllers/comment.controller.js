@@ -68,18 +68,18 @@ const getVideoComments = asyncHandler(async (req, res) => {
 const addComment = asyncHandler(async (req, res) => {
 
     const {videoId} = req.params 
-    const {comment} = req.body
+    const {content} = req.body
 
     if(!isValidObjectId(videoId)){
         throw new ApiError(404, 'video id is required and should be valid')
     }
-    if(!comment?.trim()){
+    if(!content?.trim()){
         throw new ApiError(404,'comment is required ')
     }
 
     const addedComment = await Comment.insertMany([
         {
-            comment,
+            content,
             owner:req.user?._id,
             video:videoId
         }
@@ -105,6 +105,7 @@ const updateComment = asyncHandler(async (req, res) => {
 
     const {commentId} = req.params 
     const {content} = req.body
+    
 
     if(!isValidObjectId(commentId)){
         throw new ApiError(404, 'comment id is required and should be valid')
@@ -115,7 +116,7 @@ const updateComment = asyncHandler(async (req, res) => {
 
     const comment = await Comment.findById(commentId);
 
-    if(!comment || comment.owner!=req.user?._id){
+    if(!comment || !comment.owner.equals(req.user?._id)){
         throw new ApiError(401,'Either comment id is invalid or trying to update other user comment')
     }
     
@@ -128,7 +129,7 @@ const updateComment = asyncHandler(async (req, res) => {
         new ApiResponse(
             200,
             comment,
-            'Successfully deleted comment'
+            'Successfully updated the comment'
         )
     )
 
@@ -146,7 +147,7 @@ const deleteComment = asyncHandler(async (req, res) => {
 
     const comment = await Comment.findById(commentId);
 
-    if(!comment || comment.owner!=req.user?._id){
+    if(!comment || !comment.owner.equals(req.user?._id)){
         throw new ApiError(401,`Either comment id is invalid or trying to delete other user's comment`)
     }
     
